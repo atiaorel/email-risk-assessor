@@ -32,7 +32,9 @@ The scorer currently checks for:
 
 ## Security Considerations
 
-- Email content is treated as untrusted input.
+- Email data is treated as untrusted input.
+- The add-on follows a data minimization approach: the raw email body is not sent to the backend.
+- Urgent/social-engineering language is detected in the Google Apps Script layer, and only a boolean signal is sent to AWS Lambda.
 - Text fields are clamped to maximum lengths before analysis.
 - The backend does not store email content.
 - The Lambda endpoint requires a shared secret sent in the `X-Addon-Secret` header.
@@ -53,7 +55,7 @@ The backend returns:
   ],
   "recommendation": "Exercise caution. Do not click links or download files unless verified."
 }
-```
+
 
 ## Project Structure
 
