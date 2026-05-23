@@ -112,6 +112,25 @@ function createCard(data) {
     return "\u202A" + text + "\u202C";
   }
 
+  function buildGaugeUrl(score, color) {
+    var config = {
+      type: "radialGauge",
+      data: { datasets: [{ data: [score], backgroundColor: color }] },
+      options: {
+        domain: [0, 100],
+        trackColor: "#E0E0E0",
+        centerPercentage: 80,
+        centerArea: { text: String(score) + "/100", fontColor: color, fontSize: 20 }
+      }
+    };
+    return "https://quickchart.io/chart?w=140&h=140&c=" +
+           encodeURIComponent(JSON.stringify(config));
+  }
+
+  var score = typeof data.score === "number" ? Math.max(0, Math.min(100, data.score)) : 0;
+  var color = data.color || "#9E9E9E";
+  var label = data.verdict || "Unknown";
+
   var card = CardService.newCardBuilder();
   card.setHeader(
     CardService.newCardHeader()
@@ -120,21 +139,20 @@ function createCard(data) {
 
   var section = CardService.newCardSection();
 
-  // Verdict
+  // Circular gauge (rendered as an image)
   section.addWidget(
-    CardService.newDecoratedText()
-      .setTopLabel(ltr("Verdict"))
-      .setText(ltr("<font color='" + data.color + "'>" + data.verdict + "</font>"))
-      .setWrapText(true)
+    CardService.newImage()
+      .setImageUrl(buildGaugeUrl(score, color))
+      .setAltText("Risk score " + score + " out of 100")
   );
 
-  // Risk Score
   section.addWidget(
-    CardService.newDecoratedText()
-      .setTopLabel(ltr("Risk Score"))
-      .setText(ltr(data.score + "/100"))
-      .setWrapText(true)
+    CardService.newTextParagraph()
+      .setText(ltr("<b><font color='" + color + "'>" + label + "</font></b>"))
   );
+
+  // Divider
+  section.addWidget(CardService.newDivider());
 
   // Recommendation
   section.addWidget(
