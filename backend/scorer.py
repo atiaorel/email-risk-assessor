@@ -232,25 +232,12 @@ def analyze_email(input_data: dict) -> dict:
         score += 30
         reasons.append("DMARC policy failed")
 
-    # 2. Social Engineering / Urgent Language
-    urgent_keywords = [
-        "urgent",
-        "action required",
-        "verify",
-        "suspend",
-        "password",
-        "דחוף",
-        "חסימה",
-        "אימות"
-    ]
+   # 2. Social Engineering / Urgent Language
+    has_urgent = input_data.get("has_urgent_language", False)
 
-    email_text = (subject + " " + body).lower()
-
-    for word in urgent_keywords:
-        if word in email_text:
-            score += 15
-            reasons.append("Contains social engineering / urgent language")
-            break
+    if has_urgent:
+     score += 15
+     reasons.append("Contains social engineering / urgent language")
 
     # 3. Shortened Links
     if has_shortened_link(links):

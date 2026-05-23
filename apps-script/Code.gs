@@ -12,12 +12,31 @@ function buildAddOn(e) {
   var message = GmailApp.getMessageById(messageId);
 
   // Extract the email data relevant for our cybersecurity analysis
+  var subjectText = (message.getSubject() || "").toLowerCase();
+  var plainBody = (message.getPlainBody() || "").toLowerCase();
+
+  var urgentKeywords = [
+    "urgent",
+    "action required",
+    "verify",
+    "suspend",
+    "password",
+    "דחוף",
+    "חסימה",
+    "אימות"
+  ];
+
+  var searchableText = subjectText + " " + plainBody;
+
+  var hasUrgentLanguage = urgentKeywords.some(function(word) {
+    return searchableText.indexOf(word) !== -1;
+  });
   var payload = {
     "sender_name": extractName(message.getFrom()),
     "sender_email": extractEmail(message.getFrom()),
     "reply_to": extractEmail(message.getReplyTo()) || "",
     "subject": message.getSubject() || "",
-    "body": (message.getPlainBody() || "").substring(0, BODY_LIMIT),
+    "has_urgent_language": hasUrgentLanguage,
     "auth_results": message.getHeader("Authentication-Results") || "",
     "links": extractLinks(message.getBody()),
     "attachments": getAttachmentsData(message)
@@ -195,7 +214,7 @@ function testBackendConnection() {
     sender_email: "paypal-security-alert@gmail.com",
     reply_to: "attacker@example.com",
     subject: "Urgent: verify your password immediately",
-    body: "Your PayPal account has been temporarily suspended. Click here to verify your password.",
+    has_urgent_language: true,
     auth_results: "spf=fail dkim=fail dmarc=fail",
     links: ["https://bit.ly/paypal-secure-login"],
     attachments: [{ filename: "invoice.exe" }]
