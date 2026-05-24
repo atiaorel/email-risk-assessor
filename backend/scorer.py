@@ -3,6 +3,9 @@ from email.utils import parseaddr
 import difflib
 import html
 import re
+import json
+import os
+import urllib.request
 
 
 # --- Configuration ---
@@ -97,6 +100,52 @@ def has_shortened_link(links) -> bool:
             return True
 
     return False
+
+
+def check_safe_browsing(links) -> bool:
+    """Checks links against Google Safe Browsing API. Returns True if any link is flagged."""
+    if not links:
+        return False
+
+    api_key = os.environ.get("SAFE_BROWSING_API_KEY")
+    if not api_key:
+        return False
+
+    url = "https://safebrowsing.googleapis.com/v4/threatMatches:find?key=" + api_key
+
+    payload = {
+        "client": {
+            "clientId": "gmail-addon-scorer",
+            "clientVersion": "1.0"
+        },
+        "threatInfo": {
+            "threatTypes": [
+                "MALWARE",
+                "SOCIAL_ENGINEERING",
+                "UNWANTED_SOFTWARE"
+            ],
+            "platformTypes": ["ANY_PLATFORM"],
+            "threatEntryTypes": ["URL"],
+            "threatEntries": [{"url": link} for link in links]
+        }
+    }
+
+    try:
+        request = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+
+        with urllib.request.urlopen(request, timeout=2.0) as response:
+            result = json.loads(response.read().decode("utf-8"))
+            return "matches" in result
+
+    except Exception:
+        # Fail open: if Safe Browsing is unavailable, continue with the local rules.
+        return False
+
 
 
 def parse_auth_results(auth_header: str) -> dict:
@@ -243,6 +292,11 @@ def analyze_email(input_data: dict) -> dict:
     if has_shortened_link(links):
         score += 25
         reasons.append("Contains a shortened URL designed to hide the real destination")
+
+    # External URL reputation signal: Google Safe Browsing
+    if check_safe_browsing(links):
+        score += 100
+        reasons.append("One or more links were flagged as potentially unsafe by Google Safe Browsing")    
 
     # 4. Risky Attachments
     risky_extensions = [".exe", ".bat", ".scr", ".js", ".vbs", ".zip"]

@@ -22,6 +22,7 @@ Gmail Add-on → Google Apps Script → AWS Lambda → Rule-based phishing score
 The scorer currently checks for:
 
 - SPF, DKIM, and DMARC authentication failures
+- External URL reputation checks using Google Safe Browsing
 - Urgent or social-engineering language
 - Shortened URLs
 - Risky attachment types
@@ -34,6 +35,7 @@ The scorer currently checks for:
 
 - Email data is treated as untrusted input.
 - The add-on follows a data minimization approach: the raw email body is not sent to the backend.
+- URL reputation checks may send extracted URLs to Google Safe Browsing as an external threat-intelligence signal.
 - Urgent/social-engineering language is detected in the Google Apps Script layer, and only a boolean signal is sent to AWS Lambda.
 - Text fields are clamped to maximum lengths before analysis.
 - The backend does not store email content.
@@ -77,6 +79,7 @@ README.md
 - The system is rule-based and does not use machine learning.
 - Gmail Add-ons cannot analyze messages already blocked by Gmail as spam or suspicious.
 - Link analysis checks the URL itself, but does not compare visible link text against the actual href.
+- Google Safe Browsing is used as an optional external signal; if the API is unavailable, the system fails open and continues with local rules.
 - The shared secret is suitable for this MVP, but a production system would use stronger authentication and authorization.
 
 ## Future Improvements
