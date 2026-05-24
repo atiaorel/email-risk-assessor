@@ -145,24 +145,19 @@ README.md
 ## Limitations
 
 - The system is rule-based and does not use machine learning. This makes the output explainable, but less adaptive to novel or subtle phishing techniques.
-- Gmail Add-ons cannot analyze messages already blocked by Gmail as spam or suspicious.
 - Link analysis checks the URL itself, but does not compare visible link text against the actual href.
-- Google Safe Browsing is used as an optional external signal. If the API is unavailable, the system fails open and continues with local rules.
-- Google Safe Browsing fail-open behavior is silent. If the external reputation check is skipped because of timeout, missing API key, or API failure, the user is not explicitly notified.
-- The current MVP does not implement request rate limiting. The Lambda endpoint is protected by a shared secret, but a production system should add rate limiting, abuse detection, and possibly API Gateway or WAF-level protections.
-- The shared secret is suitable for this MVP, but a production system would use stronger authentication and authorization.
+- Google Safe Browsing is implemented as a silent fail-open optional signal. If the reputation check is skipped because of timeout, missing API key, or API failure, the final score may be weakened without explicitly notifying the user.
+- The current MVP does not implement request rate limiting, and the shared secret is suitable only as a lightweight MVP protection layer. A production system would require stronger authentication, authorization, abuse detection, and rate limiting.
 
 ## Future Improvements
 
-- Add CI/CD with GitHub Actions for automatic Lambda deployment.
-- Add clasp-based deployment for Apps Script.
+- Add a machine-learning-based detection layer to complement the rule-based engine and catch more subtle or novel phishing patterns, while keeping the explanations visible to the user.
+- Add automated deployment for both AWS Lambda and Apps Script.
+- Add a user-defined custom blocklist, letting users flag specific senders or domains so personal or organization-specific threats are caught in addition to the built-in rules.
 - Add stronger authentication and per-user authorization.
 - Add API Gateway or WAF-level rate limiting and abuse protection.
-- Add richer URL and domain reputation checks.
-- Strip or normalize sensitive URL query parameters before external reputation checks where possible.
-- Add optional storage of anonymized aggregate metrics.
-- Add a more detailed dashboard for triggered indicators.
 - Add visible-link-text vs actual-href mismatch detection.
+
 
 ## Status
 
